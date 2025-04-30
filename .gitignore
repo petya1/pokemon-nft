@@ -1,0 +1,69 @@
+# Node dependencies
+/node_modules
+/frontend/node_modules
+/.pnp
+.pnp.js
+
+# Next.js build outputs
+/.next/
+/frontend/.next/
+/out/
+/build
+/dist
+/frontend/build
+/frontend/dist
+
+# Hardhat
+/artifacts/
+/cache/
+/typechain/
+/typechain-types/
+
+# Coverage files
+/coverage
+/coverage.json
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.secret
+
+# Generated contract info
+src/lib/contracts/addresses.json
+frontend/src/lib/contracts/addresses.json
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Hardhat deployment files
+deployments/
+
+# Gas reporter results
+gas-report.txt
+
+# Local blockchain
+/db
+
+# Temporary files
+*.log
+.tmp/
+tmp/
+
+# Production build
+/build-frontend
+
+# TypeScript cache
+*.tsbuildinfo
+next-env.d.ts

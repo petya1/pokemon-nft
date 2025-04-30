@@ -1,0 +1,167 @@
+[
+  {
+    "id": 1,
+    "name": "Bulbasaur",
+    "type": "grass/poison",
+    "rarity": "Uncommon",
+    "maxSupply": 50,
+    "attack": 49,
+    "defense": 49,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png",
+    "description": "A strange seed was planted on its back at birth. The plant sprouts and grows with this POKéMON."
+  },
+  {
+    "id": 2,
+    "name": "Ivysaur",
+    "type": "grass/poison",
+    "rarity": "Rare",
+    "maxSupply": 20,
+    "attack": 62,
+    "defense": 63,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/2.png",
+    "description": "When the bulb on its back grows large, it appears to lose the ability to stand on its hind legs."
+  },
+  {
+    "id": 3,
+    "name": "Venusaur",
+    "type": "grass/poison",
+    "rarity": "Ultra Rare",
+    "maxSupply": 10,
+    "attack": 82,
+    "defense": 83,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png",
+    "description": "The plant blooms when it is absorbing solar energy. It stays on the move to seek sunlight."
+  },
+  {
+    "id": 4,
+    "name": "Charmander",
+    "type": "fire",
+    "rarity": "Uncommon",
+    "maxSupply": 50,
+    "attack": 52,
+    "defense": 43,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png",
+    "description": "Obviously prefers hot places. When it rains, steam is said to spout from the tip of its tail."
+  },
+  {
+    "id": 5,
+    "name": "Charmeleon",
+    "type": "fire",
+    "rarity": "Rare",
+    "maxSupply": 20,
+    "attack": 64,
+    "defense": 58,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/5.png",
+    "description": "When it swings its burning tail, it elevates the temperature to unbearably high levels."
+  },
+  {
+    "id": 6,
+    "name": "Charizard",
+    "type": "fire/flying",
+    "rarity": "Ultra Rare",
+    "maxSupply": 10,
+    "attack": 84,
+    "defense": 78,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png",
+    "description": "Spits fire that is hot enough to melt boulders. Known to cause forest fires unintentionally."
+  },
+  {
+    "id": 7,
+    "name": "Squirtle",
+    "type": "water",
+    "rarity": "Uncommon",
+    "maxSupply": 50,
+    "attack": 48,
+    "defense": 65,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png",
+    "description": "After birth, its back swells and hardens into a shell. Powerfully sprays foam from its mouth."
+  },
+  {
+    "id": 8,
+    "name": "Wartortle",
+    "type": "water",
+    "rarity": "Rare",
+    "maxSupply": 20,
+    "attack": 63,
+    "defense": 80,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/8.png",
+    "description": "Often hides in water to stalk unwary prey. For swimming fast, it moves its ears to maintain balance."
+  },
+  {
+    "id": 9,
+    "name": "Blastoise",
+    "type": "water",
+    "rarity": "Ultra Rare",
+    "maxSupply": 10,
+    "attack": 83,
+    "defense": 100,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png",
+    "description": "A brutal POKéMON with pressurized water jets on its shell. They are used for high speed tackles."
+  },
+  {
+    "id": 10,
+    "name": "Caterpie",
+    "type": "bug",
+    "rarity": "Common",
+    "maxSupply": 100,
+    "attack": 30,
+    "defense": 35,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10.png",
+    "description": "Its short feet are tipped with suction pads that enable it to tirelessly climb slopes and walls."
+  },
+  {
+    "id": 11,
+    "name": "Metapod",
+    "type": "bug",
+    "rarity": "Common",
+    "maxSupply": 100,
+    "attack": 20,
+    "defense": 55,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/11.png",
+    "description": "This POKéMON is vulnerable to attack while its shell is soft, exposing its weak and tender body."
+  },
+  {
+    "id": 12,
+    "name": "Butterfree",
+    "type": "bug/flying",
+    "rarity": "Uncommon",
+    "maxSupply": 50,
+    "attack": 45,
+    "defense": 50,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/12.png",
+    "description": "In battle, it flaps its wings at high speed to release highly toxic dust into the air."
+  },
+  {
+    "id": 13,
+    "name": "Weedle",
+    "type": "bug/poison",
+    "rarity": "Common",
+    "maxSupply": 100,
+    "attack": 35,
+    "defense": 30,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/13.png",
+    "description": "Often found in forests, eating leaves. It has a sharp venomous stinger on its head."
+  },
+  {
+    "id": 14,
+    "name": "Kakuna",
+    "type": "bug/poison",
+    "rarity": "Common",
+    "maxSupply": 100,
+    "attack": 25,
+    "defense": 50,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/14.png",
+    "description": "Almost incapable of moving, this POKéMON can only harden its shell to protect itself from predators."
+  },
+  {
+    "id": 15,
+    "name": "Beedrill",
+    "type": "bug/poison",
+    "rarity": "Uncommon",
+    "maxSupply": 50,
+    "attack": 90,
+    "defense": 40,
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/15.png",
+    "description": "It has three poisonous stingers on its forelegs and its tail. They are used to jab its enemy repeatedly."
+  }
+]
