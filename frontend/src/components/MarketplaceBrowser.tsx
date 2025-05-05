@@ -51,7 +51,8 @@ export default function MarketplaceBrowser() {
             const listing = await marketplaceContract.listings(i);
             
             // Check if listing is active (status = 0 typically means active)
-            if (listing && Number(listing.status) === 0) {
+            if (listing && Number(listing.status) === 0 && Number(listing.listingType) === 0) {
+              // Only include fixed-price listings (type 0)
               // Get the Pokemon data for this token
               const pokemon = await nftContract.pokemonData(listing.tokenId);
               

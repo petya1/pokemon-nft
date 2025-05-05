@@ -31,6 +31,7 @@ export default function Navbar() {
           <div className="hidden md:flex space-x-6">
             <Link href="/" className="hover:text-blue-200 transition">Home</Link>
             <Link href="/marketplace" className="hover:text-blue-200 transition">Marketplace</Link>
+            <Link href="/auctions" className="hover:text-blue-200 transition">Auctions</Link>
             <Link href="/my-collection" className="hover:text-blue-200 transition">My Collection</Link>
             {isOwner && (
               <Link href="/admin" className="text-yellow-300 hover:text-yellow-100 transition font-medium">
