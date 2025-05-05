@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Number of Pokémon to fetch (e.g., original 151)
-const POKEMON_COUNT = 15;
+const POKEMON_COUNT = 200;
 // Base URL for PokéAPI
 const API_BASE_URL = 'https://pokeapi.co/api/v2/';
 

@@ -6,6 +6,19 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with the account:", deployer.address);
 
+  // Load Pokemon data from the JSON file (assuming it already exists)
+  let pokemonData;
+  try {
+    const dataPath = path.join(__dirname, '../data/pokemon.json');
+    const jsonData = fs.readFileSync(dataPath, 'utf8');
+    pokemonData = JSON.parse(jsonData);
+    console.log(`Loaded data for ${pokemonData.length} Pokémon from pokemon.json`);
+  } catch (error) {
+    console.error("Error loading Pokemon data:", error);
+    console.error("Make sure you've run fetchPokemonData.js first!");
+    process.exit(1);
+  }
+
   // Deploy PokemonNFT contract
   const PokemonNFT = await ethers.getContractFactory("PokemonNFT");
   const pokemonNFT = await PokemonNFT.deploy("https://pokeapi.co/api/v2/pokemon/");
@@ -13,6 +26,33 @@ async function main() {
 
   const pokemonNFTAddress = await pokemonNFT.getAddress();
   console.log("PokemonNFT deployed to:", pokemonNFTAddress);
+
+  // Add the loaded Pokemon to the contract
+  console.log("Adding Pokemon to the contract...");
+  
+  // We'll add Pokemon in batches to avoid gas limits
+  const BATCH_SIZE = 5; // Adjust based on gas limits/network
+  
+  for (let i = 0; i < pokemonData.length; i += BATCH_SIZE) {
+    const batch = pokemonData.slice(i, i + BATCH_SIZE);
+    console.log(`Adding batch ${i/BATCH_SIZE + 1} (${batch.length} Pokemon)...`);
+    
+    for (const pokemon of batch) {
+      console.log(`Adding ${pokemon.name}...`);
+      await pokemonNFT.addPokemon(
+        pokemon.id,
+        pokemon.name,
+        pokemon.type,
+        pokemon.rarity,
+        pokemon.attack,
+        pokemon.defense,
+        pokemon.maxSupply
+      );
+    }
+    console.log(`Batch ${i/BATCH_SIZE + 1} complete!`);
+  }
+  
+  console.log("All Pokemon have been added to the contract");
 
   // Deploy PokemonMarketplace contract
   const PokemonMarketplace = await ethers.getContractFactory("PokemonMarketplace");
@@ -22,12 +62,10 @@ async function main() {
   const pokemonMarketplaceAddress = await pokemonMarketplace.getAddress();
   console.log("PokemonMarketplace deployed to:", pokemonMarketplaceAddress);
 
-  console.log("Initial Pokemon added in constructor");
-
   // Read full artifacts
   const nftArtifact = artifacts.readArtifactSync("PokemonNFT");
   const marketplaceArtifact = artifacts.readArtifactSync("PokemonMarketplace");
-  console.log("Artifacts read successfully", nftArtifact, marketplaceArtifact);
+  
   // Frontend output directory
   const frontendDir = path.join(__dirname, "..", "frontend", "src", "lib", "contracts");
 
@@ -54,6 +92,12 @@ async function main() {
     fs.writeFileSync(
       path.join(frontendDir, "PokemonMarketplace.json"),
       JSON.stringify(marketplaceArtifact, null, 2)
+    );
+    
+    // Also copy the Pokemon data to the frontend for reference
+    fs.copyFileSync(
+      path.join(__dirname, '../data/pokemon.json'),
+      path.join(frontendDir, "pokemonData.json")
     );
 
     console.log(`✅ Contract data written to: ${frontendDir}`);

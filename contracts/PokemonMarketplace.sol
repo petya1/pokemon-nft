@@ -81,7 +81,7 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
     }
     
     // Create a fixed price listing
-    function createListing(uint256 tokenId, uint256 price) external {
+    function createListing(uint256 tokenId, uint256 price) external whenNotStopped {
         require(pokemonNFT.ownerOf(tokenId) == msg.sender, "You don't own this token");
         require(price > 0, "Price must be greater than zero");
         require(tokenIdToListingId[tokenId] == 0, "Token already listed");
@@ -114,7 +114,7 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
     }
     
     // Create an auction listing
-    function createAuction(uint256 tokenId, uint256 startingPrice, uint256 duration) external {
+    function createAuction(uint256 tokenId, uint256 startingPrice, uint256 duration) external whenNotStopped{
         require(pokemonNFT.ownerOf(tokenId) == msg.sender, "You don't own this token");
         require(startingPrice > 0, "Starting price must be greater than zero");
         require(duration > 0, "Duration must be greater than zero");
@@ -148,7 +148,7 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
     }
     
     // Buy a fixed price listing
-    function buyListing(uint256 listingId) external payable nonReentrant {
+    function buyListing(uint256 listingId) external payable nonReentrant whenNotStopped {
         Listing storage listing = listings[listingId];
         
         require(listing.status == ListingStatus.Active, "Listing is not active");
@@ -181,7 +181,7 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
     }
     
     // Place a bid on an auction
-    function placeBid(uint256 listingId) external payable nonReentrant {
+    function placeBid(uint256 listingId) external payable nonReentrant whenNotStopped {
         Listing storage listing = listings[listingId];
         
         require(listing.status == ListingStatus.Active, "Listing is not active");
@@ -208,7 +208,7 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
     }
     
     // Finalize an auction after it has ended
-    function finalizeAuction(uint256 listingId) external nonReentrant {
+    function finalizeAuction(uint256 listingId) external nonReentrant whenNotStopped {
         Listing storage listing = listings[listingId];
         
         require(listing.status == ListingStatus.Active, "Listing is not active");

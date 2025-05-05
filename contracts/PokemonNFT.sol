@@ -64,9 +64,7 @@ contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
     
     constructor(string memory baseURI) ERC721("PokemonCards", "PKMN") Ownable(msg.sender) {
         _baseTokenURI = baseURI;
-        
-        // Add initial Pokemon directly in constructor
-        _addInitialPokemon();
+        // No initial Pokemon added here anymore
     }
     
     function _baseURI() internal view override returns (string memory) {
@@ -222,70 +220,6 @@ contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
     // Withdraw balance (only owner)
     function withdraw() external onlyOwner {
         payable(owner()).transfer(address(this).balance);
-    }
-    
-    // Internal function to add initial Pokemon
-    function _addInitialPokemon() internal {
-        // Add starter Pokemon
-        Pokemon memory bulbasaur = Pokemon({
-            pokemonId: 1,
-            name: "Bulbasaur",
-            pokemonType: "Grass",
-            rarity: "Common",
-            attack: 49,
-            defense: 49,
-            maxSupply: 100,
-            currentSupply: 0
-        });
-        availablePokemon.push(bulbasaur);
-        
-        Pokemon memory charmander = Pokemon({
-            pokemonId: 4,
-            name: "Charmander",
-            pokemonType: "Fire",
-            rarity: "Common",
-            attack: 52,
-            defense: 43,
-            maxSupply: 100,
-            currentSupply: 0
-        });
-        availablePokemon.push(charmander);
-        
-        Pokemon memory squirtle = Pokemon({
-            pokemonId: 7,
-            name: "Squirtle",
-            pokemonType: "Water",
-            rarity: "Common",
-            attack: 48,
-            defense: 65,
-            maxSupply: 100,
-            currentSupply: 0
-        });
-        availablePokemon.push(squirtle);
-        
-        Pokemon memory pikachu = Pokemon({
-            pokemonId: 25,
-            name: "Pikachu",
-            pokemonType: "Electric",
-            rarity: "Uncommon",
-            attack: 55,
-            defense: 40,
-            maxSupply: 50,
-            currentSupply: 0
-        });
-        availablePokemon.push(pikachu);
-        
-        Pokemon memory mewtwo = Pokemon({
-            pokemonId: 150,
-            name: "Mewtwo",
-            pokemonType: "Psychic",
-            rarity: "Legendary",
-            attack: 110,
-            defense: 90,
-            maxSupply: 5,
-            currentSupply: 0
-        });
-        availablePokemon.push(mewtwo);
     }
     
     // The following functions are overrides required by Solidity
