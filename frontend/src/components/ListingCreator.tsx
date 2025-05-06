@@ -82,7 +82,7 @@ export default function ListingCreator() {
             console.error(`Error fetching token #${i}:`, error);
           }
         }
-        
+        console.log(ownedPokemonArray)
         setOwnedPokemon(ownedPokemonArray);
       } catch (error) {
         console.error("Error fetching owned Pokémon:", error);

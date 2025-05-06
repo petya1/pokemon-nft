@@ -21,8 +21,10 @@ async function main() {
 
   // Deploy PokemonNFT contract
   const PokemonNFT = await ethers.getContractFactory("PokemonNFT");
-  const pokemonNFT = await PokemonNFT.deploy("https://pokeapi.co/api/v2/pokemon/");
+  const pokemonNFT = await PokemonNFT.deploy("http://localhost:3000/metadata/");
   await pokemonNFT.waitForDeployment();
+  // This could be in a setup script or a frontend interaction
+  await pokemonNFT.setBaseURI("http://localhost:3000/metadata/");
 
   const pokemonNFTAddress = await pokemonNFT.getAddress();
   console.log("PokemonNFT deployed to:", pokemonNFTAddress);

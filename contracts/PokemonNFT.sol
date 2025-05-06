@@ -118,6 +118,12 @@ contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
         pokemon.currentSupply++;
         
         _mint(recipient, newTokenId);
+
+        _setTokenURI(newTokenId, string(abi.encodePacked(
+            _baseURI(),
+            pokemon.pokemonId.toString(),
+            ".json"
+        )));
         
         // Store Pokemon data for this token
         pokemonData[newTokenId] = Pokemon({
