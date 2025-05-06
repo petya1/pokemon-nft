@@ -278,7 +278,7 @@ export default function AuctionsPage() {
                         <p className={`font-medium ${
                           isEnded ? 'text-gray-800' : 'text-purple-800'
                         }`}>
-                          {isEnded ? "Final bid:" : "Current bid:"} {auction.currentBid} ETH
+                          {/* {isEnded ? "Final bid:" : "Current bid:"} {auction.currentBid} ETH */}
                         </p>
                         <p className={`text-sm ${
                           isEnded ? 'text-gray-600' : 'text-purple-600'

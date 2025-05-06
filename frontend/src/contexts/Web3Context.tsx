@@ -74,6 +74,101 @@ export function Web3Provider({ children }: Web3ProviderProps) {
     }
   };
 
+  const commitToRandomMint = async (secretPhrase) => {
+    if (!nftContract) return;
+    
+    try {
+      // Hash the secret phrase with the user's address to create the commit
+      const commitHash = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ['string', 'address'],
+          [secretPhrase, account]
+        )
+      );
+      
+      // Submit the commit transaction
+      const tx = await nftContract.commitToRandomMint(commitHash);
+      await tx.wait();
+      
+      // Store the secret phrase locally (in a secure way in production)
+      localStorage.setItem(`commit-${account}`, secretPhrase);
+      
+      return commitHash;
+    } catch (error) {
+      console.error('Error committing to random mint:', error);
+      throw error;
+    }
+  };
+  
+  // For revealing and completing the random mint
+  const revealAndMintRandom = async () => {
+    if (!nftContract) return;
+    
+    try {
+      // Get the stored secret phrase
+      const secretPhrase = localStorage.getItem(`commit-${account}`);
+      if (!secretPhrase) {
+        throw new Error('No secret phrase found. You need to commit first.');
+      }
+      
+      // Execute the reveal and mint transaction
+      const tx = await nftContract.revealAndMintRandom(
+        secretPhrase, 
+        account,
+        { value: ethers.utils.parseEther('0.01') }
+      );
+      const receipt = await tx.wait();
+      
+      // Clear the stored secret phrase
+      localStorage.removeItem(`commit-${account}`);
+      
+      // Find the token ID from the event logs
+      const mintEvent = receipt.events.find(e => e.event === 'PokemonMinted');
+      const tokenId = mintEvent.args.tokenId.toNumber();
+      
+      return tokenId;
+    } catch (error) {
+      console.error('Error revealing and minting random Pokemon:', error);
+      throw error;
+    }
+  };
+  
+  // For sealed bid auctions
+  const submitSealedBid = async (listingId, bidAmount, secret) => {
+    if (!marketplaceContract) return;
+    
+    try {
+      // Hash the bid with a secret and the user's address
+      const bidHash = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ['uint256', 'string', 'address'],
+          [bidAmount, secret, account]
+        )
+      );
+      
+      // Determine deposit amount (usually 20-50% of actual bid)
+      const depositAmount = bidAmount.div(5); // 20% deposit
+      
+      // Submit the sealed bid
+      const tx = await marketplaceContract.submitSealedBid(
+        listingId,
+        bidHash,
+        { value: depositAmount }
+      );
+      await tx.wait();
+      
+      // Store the bid details locally (in a secure way in production)
+      localStorage.setItem(`bid-${listingId}-${account}`, 
+        JSON.stringify({ amount: bidAmount.toString(), secret })
+      );
+      
+      return bidHash;
+    } catch (error) {
+      console.error('Error submitting sealed bid:', error);
+      throw error;
+    }
+  };
+
   const connectWallet = async () => {
     setIsConnecting(true);
     setError(null);
@@ -151,6 +246,9 @@ export function Web3Provider({ children }: Web3ProviderProps) {
     marketplaceContract,
     connectWallet,
     isConnecting,
+    commitToRandomMint,
+    revealAndMintRandom,
+    submitSealedBid,
     error
   };
 
