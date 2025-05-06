@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // Define Counters library
 library Counters {
@@ -26,7 +25,7 @@ library Counters {
     }
 }
 
-contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable, ReentrancyGuard {
+contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
     using Counters for Counters.Counter;
     using Strings for uint256;
     
@@ -59,19 +58,13 @@ contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable, ReentrancyGu
     // Mint price for specific Pokemon (0.01 ETH)
     uint256 public mintPrice = 0.01 ether;
     
-    // For commit-reveal pattern (simplified)
-    mapping(bytes32 => address) public commitRequests;
-    
-    // Emergency stop functionality
-    bool public paused = false;
-    
     // Events
     event PokemonAdded(uint256 pokemonId, string name, string rarity, uint256 maxSupply);
     event PokemonMinted(uint256 tokenId, uint256 pokemonId, string name, address owner);
-    event CommitSubmitted(address indexed user, bytes32 commitHash);
     
     constructor(string memory baseURI) ERC721("PokemonCards", "PKMN") Ownable(msg.sender) {
         _baseTokenURI = baseURI;
+        // No initial Pokemon added here anymore
     }
     
     function _baseURI() internal view override returns (string memory) {
@@ -80,16 +73,6 @@ contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable, ReentrancyGu
     
     function setBaseURI(string memory baseURI) external onlyOwner {
         _baseTokenURI = baseURI;
-    }
-    
-    // Emergency pause
-    function togglePause() external onlyOwner {
-        paused = !paused;
-    }
-    
-    modifier whenNotPaused() {
-        require(!paused, "Contract is paused");
-        _;
     }
     
     // Add a new Pokemon template that can be minted (only owner)
@@ -117,8 +100,8 @@ contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable, ReentrancyGu
         emit PokemonAdded(pokemonId, name, rarity, maxSupply);
     }
     
-    // Mint a specific Pokemon
-    function mintPokemon(uint256 pokemonIndex, address recipient) public payable whenNotPaused nonReentrant returns (uint256) {
+    // Mint a specific Pokemon - REMOVED onlyOwner, added payable
+    function mintPokemon(uint256 pokemonIndex, address recipient) public payable returns (uint256) {
         require(pokemonIndex < availablePokemon.length, "Pokemon does not exist");
         require(
             availablePokemon[pokemonIndex].currentSupply < availablePokemon[pokemonIndex].maxSupply,
@@ -162,48 +145,29 @@ contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable, ReentrancyGu
         return newTokenId;
     }
     
-    // FRONT-RUNNING PROTECTION: Step 1 - Commit a hash
-    function commitToRandomMint(bytes32 commitHash) external whenNotPaused {
-        require(commitHash != bytes32(0), "Invalid commit hash");
-        commitRequests[commitHash] = msg.sender;
-        emit CommitSubmitted(msg.sender, commitHash);
-    }
-    
-    // FRONT-RUNNING PROTECTION: Step 2 - Reveal and mint
-    function revealAndMintRandom(string memory secretPhrase) external payable whenNotPaused nonReentrant returns (uint256) {
-        require(msg.value >= mintPrice, "Insufficient payment");
+    // Random mint function - selects a random available Pokemon to mint
+    function mintRandomPokemon(address recipient) public payable returns (uint256) {
         require(availablePokemon.length > 0, "No Pokemon available to mint");
+        require(msg.value >= mintPrice, "Insufficient payment");
         
-        // Hash the secret to get the commit hash
-        bytes32 commitHash = keccak256(abi.encodePacked(secretPhrase, msg.sender));
+        // Get a "random" index using block data and transaction data
+        // Note: This is not secure for production, consider using Chainlink VRF for real randomness
+        uint256 randomIndex = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender, _tokenIds.current()))) % availablePokemon.length;
         
-        // Verify the commit exists and matches the user
-        require(commitRequests[commitHash] == msg.sender, "No matching commit found");
-        
-        // Delete the commit to prevent reuse
-        delete commitRequests[commitHash];
-        
-        // Generate randomness using the reveal
-        uint256 randomIndex = uint256(keccak256(abi.encodePacked(
-            secretPhrase,
-            blockhash(block.number - 1),
-            block.timestamp,
-            msg.sender
-        ))) % availablePokemon.length;
-        
-        // Find available Pokemon
+        // Find a Pokemon that hasn't reached max supply
         uint256 count = 0;
         while (availablePokemon[randomIndex].currentSupply >= availablePokemon[randomIndex].maxSupply) {
             randomIndex = (randomIndex + 1) % availablePokemon.length;
             count++;
             
+            // If we've checked all Pokemon and none are available, revert
             if (count >= availablePokemon.length) {
                 revert("All Pokemon have reached maximum supply");
             }
         }
         
-        // Mint the Pokemon
-        return _mintPokemonInternal(randomIndex, msg.sender);
+        // Call the mintPokemon function without sending ETH again (we already checked)
+        return _mintPokemonInternal(randomIndex, recipient);
     }
     
     // Internal function to mint without checking payment again
@@ -215,13 +179,6 @@ contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable, ReentrancyGu
         pokemon.currentSupply++;
         
         _mint(recipient, newTokenId);
-        
-        // Set token URI
-        _setTokenURI(newTokenId, string(abi.encodePacked(
-            _baseURI(),
-            pokemon.pokemonId.toString(),
-            ".json"
-        )));
         
         // Store Pokemon data for this token
         pokemonData[newTokenId] = Pokemon({
@@ -243,30 +200,8 @@ contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable, ReentrancyGu
         return newTokenId;
     }
     
-    // Legacy random mint function - DEPRECATED but kept for compatibility
-    function mintRandomPokemon(address recipient) public payable whenNotPaused nonReentrant returns (uint256) {
-        require(availablePokemon.length > 0, "No Pokemon available to mint");
-        require(msg.value >= mintPrice, "Insufficient payment");
-        
-        // Get a "random" index using block data and transaction data
-        uint256 randomIndex = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender, _tokenIds.current()))) % availablePokemon.length;
-        
-        // Find a Pokemon that hasn't reached max supply
-        uint256 count = 0;
-        while (availablePokemon[randomIndex].currentSupply >= availablePokemon[randomIndex].maxSupply) {
-            randomIndex = (randomIndex + 1) % availablePokemon.length;
-            count++;
-            
-            if (count >= availablePokemon.length) {
-                revert("All Pokemon have reached maximum supply");
-            }
-        }
-        
-        return _mintPokemonInternal(randomIndex, recipient);
-    }
-    
     // Simplified mint function for testing - always mints the first Pokemon
-    function simpleMint() public payable whenNotPaused nonReentrant returns (uint256) {
+    function simpleMint() public payable returns (uint256) {
         require(availablePokemon.length > 0, "No Pokemon available to mint");
         require(msg.value >= mintPrice, "Insufficient payment");
         
@@ -289,7 +224,7 @@ contract PokemonNFT is ERC721URIStorage, ERC721Enumerable, Ownable, ReentrancyGu
     }
     
     // Withdraw balance (only owner)
-    function withdraw() external onlyOwner nonReentrant {
+    function withdraw() external onlyOwner {
         payable(owner()).transfer(address(this).balance);
     }
     

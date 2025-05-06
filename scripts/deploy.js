@@ -19,10 +19,11 @@ async function main() {
     process.exit(1);
   }
 
+  // Deploy PokemonNFT contract
   const PokemonNFT = await ethers.getContractFactory("PokemonNFT");
   const pokemonNFT = await PokemonNFT.deploy("http://localhost:3000/metadata/");
   await pokemonNFT.waitForDeployment();
-  
+  // This could be in a setup script or a frontend interaction
   await pokemonNFT.setBaseURI("http://localhost:3000/metadata/");
 
   const pokemonNFTAddress = await pokemonNFT.getAddress();
@@ -31,8 +32,8 @@ async function main() {
   // Add the loaded Pokemon to the contract
   console.log("Adding Pokemon to the contract...");
   
-  // We'll add Pokemon in smaller batches to avoid gas limits
-  const BATCH_SIZE = 3; // Reduced batch size to avoid contract size issues
+  // We'll add Pokemon in batches to avoid gas limits
+  const BATCH_SIZE = 5; // Adjust based on gas limits/network
   
   for (let i = 0; i < pokemonData.length; i += BATCH_SIZE) {
     const batch = pokemonData.slice(i, i + BATCH_SIZE);
