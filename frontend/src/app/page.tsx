@@ -127,7 +127,7 @@ function MintPokemon() {
           <p className="mb-4">Available Pokémon types: {pokemonCount ? pokemonCount.toString() : '0'}</p>
           
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
+            {/* <div className="flex-1">
               <h3 className="font-semibold mb-2">Mint Specific Pokémon</h3>
               <div className="flex space-x-2">
                 <input
@@ -147,7 +147,7 @@ function MintPokemon() {
                 </button>
               </div>
             </div>
-            
+             */}
             <div className="flex-1">
               <h3 className="font-semibold mb-2">Mint Random Pokémon</h3>
               <button
