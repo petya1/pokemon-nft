@@ -46,6 +46,7 @@ Contract ABIs and addresses written to: src/lib/contracts
 
 ```bash
 # Open a third terminal window
+cd frontend
 npm run dev
 ```
 
@@ -61,7 +62,7 @@ Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
    - Fill in these details:
      - Network Name: `Hardhat`
      - RPC URL: `http://127.0.0.1:8545`
-     - Chain ID: `31337`
+     - Chain ID: `1337`
      - Currency Symbol: `ETH`
 
 3. Import a test account:
@@ -77,7 +78,10 @@ Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
    - Mint Pokémon NFTs (costs 0.01 ETH)
    - View your collection under "My Collection"
    - List Pokémon for sale at a price you set
-   - Browse and purchase others' Pokémon in the "Marketplace" 
+   - Browse and purchase others' Pokémon in the "Marketplace"
+   - List Pokémon for auction
+   - To place a bid in the auction
+   - Pause contract and withdraw collected fees as an admin
 
 ## Troubleshooting
 
