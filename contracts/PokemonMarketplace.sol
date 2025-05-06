@@ -4,32 +4,11 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-// import "@openzeppelin/contracts/utils/Counters.sol";
-// import "@openzeppelin/contracts/utils/structs/Counters.sol";
 import "./PokemonNFT.sol";
 
-// If you need Counters in this contract too, define it here
-// library Counters {
-//     struct Counter {
-//         uint256 _value;
-//     }
 
-//     function current(Counter storage counter) internal view returns (uint256) {
-//         return counter._value;
-//     }
-
-//     function increment(Counter storage counter) internal {
-//         counter._value += 1;
-//     }
-
-//     function decrement(Counter storage counter) internal {
-//         counter._value -= 1;
-//     }
-// }
 
 contract PokemonMarketplace is ReentrancyGuard, Ownable {
-
-
     using Counters for Counters.Counter;
     
     // Track listing IDs
@@ -69,12 +48,21 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
     // Mapping for user funds that can be withdrawn
     mapping(address => uint256) public pendingWithdrawals;
     
+    // For sealed bid auctions
+    mapping(uint256 => mapping(address => bytes32)) public sealedBids;
+    mapping(bytes32 => bool) public usedBidHashes;
+    
     // Events
     event ListingCreated(uint256 listingId, address seller, uint256 tokenId, uint256 price, ListingType listingType, uint256 auctionEndTime);
     event ListingSuccessful(uint256 listingId, address buyer, uint256 price);
     event ListingCancelled(uint256 listingId);
     event BidPlaced(uint256 listingId, address bidder, uint256 bid);
     event AuctionFinalized(uint256 listingId, address winner, uint256 price);
+    event SealedBidSubmitted(uint256 listingId, address bidder, bytes32 bidHash);
+    event SealedBidRevealed(uint256 listingId, address bidder, uint256 bid);
+    
+    // Emergency stop
+    bool public emergencyStop = false;
     
     constructor(address _nftContract) Ownable(msg.sender) {
         pokemonNFT = PokemonNFT(_nftContract);
@@ -114,7 +102,7 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
     }
     
     // Create an auction listing
-    function createAuction(uint256 tokenId, uint256 startingPrice, uint256 duration) external whenNotStopped{
+    function createAuction(uint256 tokenId, uint256 startingPrice, uint256 duration) external whenNotStopped {
         require(pokemonNFT.ownerOf(tokenId) == msg.sender, "You don't own this token");
         require(startingPrice > 0, "Starting price must be greater than zero");
         require(duration > 0, "Duration must be greater than zero");
@@ -180,40 +168,69 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
         emit ListingSuccessful(listingId, msg.sender, listing.price);
     }
     
-    // Place a bid on an auction
-    function placeBid(uint256 listingId) external payable nonReentrant whenNotStopped {
+    // FRONT-RUNNING PROTECTION: Submit a sealed bid (commit)
+    function submitSealedBid(uint256 listingId, bytes32 bidHash) external payable nonReentrant whenNotStopped {
         Listing storage listing = listings[listingId];
         
         require(listing.status == ListingStatus.Active, "Listing is not active");
         require(listing.listingType == ListingType.Auction, "This is not an auction");
         require(block.timestamp < listing.auctionEndTime, "Auction has ended");
         require(msg.sender != listing.seller, "Seller cannot bid on their own auction");
+        require(!usedBidHashes[bidHash], "Bid hash already used");
         
-        // If there's no bid yet, must be at least the starting price
-        if (listing.highestBidder == address(0)) {
-            require(msg.value >= listing.price, "Bid must be at least the starting price");
-        } else {
-            // Otherwise, must be higher than current highest bid
-            require(msg.value > listing.highestBid, "Bid must be higher than current highest bid");
-            
-            // Refund the previous highest bidder
-            pendingWithdrawals[listing.highestBidder] += listing.highestBid;
-        }
+        // Store bid hash
+        sealedBids[listingId][msg.sender] = bidHash;
+        usedBidHashes[bidHash] = true;
         
-        // Update highest bid info
-        listing.highestBidder = msg.sender;
-        listing.highestBid = msg.value;
+        // Store deposit
+        pendingWithdrawals[msg.sender] += msg.value;
         
-        emit BidPlaced(listingId, msg.sender, msg.value);
+        emit SealedBidSubmitted(listingId, msg.sender, bidHash);
     }
     
-    // Finalize an auction after it has ended
+    // FRONT-RUNNING PROTECTION: Reveal a sealed bid
+    function revealBid(uint256 listingId, uint256 bidAmount, string memory secret) external nonReentrant whenNotStopped {
+        Listing storage listing = listings[listingId];
+        
+        require(listing.status == ListingStatus.Active, "Listing is not active");
+        require(block.timestamp >= listing.auctionEndTime, "Auction has not ended yet");
+        require(block.timestamp <= listing.auctionEndTime + 1 hours, "Reveal period has ended");
+        
+        // Calculate and verify bid hash
+        bytes32 bidHash = keccak256(abi.encodePacked(bidAmount, secret, msg.sender));
+        require(sealedBids[listingId][msg.sender] == bidHash, "Revealed bid does not match commitment");
+        
+        // Clear the sealed bid
+        sealedBids[listingId][msg.sender] = bytes32(0);
+        
+        // Ensure bidder has enough in pendingWithdrawals
+        require(pendingWithdrawals[msg.sender] >= bidAmount, "Insufficient funds for bid");
+        
+        // If this is the highest bid, record it
+        if (bidAmount > listing.highestBid) {
+            // Return funds to previous highest bidder
+            if (listing.highestBidder != address(0)) {
+                // The previous highest bid is still in their pendingWithdrawals
+            }
+            
+            // Update highest bid info
+            listing.highestBidder = msg.sender;
+            listing.highestBid = bidAmount;
+            
+            // Reduce pendingWithdrawals by bid amount
+            pendingWithdrawals[msg.sender] -= bidAmount;
+        }
+        
+        emit SealedBidRevealed(listingId, msg.sender, bidAmount);
+    }
+    
+    // Finalize an auction after all bids are revealed
     function finalizeAuction(uint256 listingId) external nonReentrant whenNotStopped {
         Listing storage listing = listings[listingId];
         
         require(listing.status == ListingStatus.Active, "Listing is not active");
         require(listing.listingType == ListingType.Auction, "This is not an auction");
-        require(block.timestamp >= listing.auctionEndTime, "Auction has not ended yet");
+        require(block.timestamp > listing.auctionEndTime + 1 hours, "Reveal period has not ended");
         
         // Mark as sold
         listing.status = ListingStatus.Sold;
@@ -239,6 +256,33 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
         delete tokenIdToListingId[listing.tokenId];
         
         emit AuctionFinalized(listingId, listing.highestBidder, listing.highestBid);
+    }
+    
+    // Regular bid function for normal auctions (still supported)
+    function placeBid(uint256 listingId) external payable nonReentrant whenNotStopped {
+        Listing storage listing = listings[listingId];
+        
+        require(listing.status == ListingStatus.Active, "Listing is not active");
+        require(listing.listingType == ListingType.Auction, "This is not an auction");
+        require(block.timestamp < listing.auctionEndTime, "Auction has ended");
+        require(msg.sender != listing.seller, "Seller cannot bid on their own auction");
+        
+        // If there's no bid yet, must be at least the starting price
+        if (listing.highestBidder == address(0)) {
+            require(msg.value >= listing.price, "Bid must be at least the starting price");
+        } else {
+            // Otherwise, must be higher than current highest bid
+            require(msg.value > listing.highestBid, "Bid must be higher than current highest bid");
+            
+            // Refund the previous highest bidder
+            pendingWithdrawals[listing.highestBidder] += listing.highestBid;
+        }
+        
+        // Update highest bid info
+        listing.highestBidder = msg.sender;
+        listing.highestBid = msg.value;
+        
+        emit BidPlaced(listingId, msg.sender, msg.value);
     }
     
     // Cancel a listing (only if there are no bids for auctions)
@@ -278,21 +322,12 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
     }
     
     // Withdraw accumulated fees (owner only)
-    function withdrawFees() external onlyOwner {
-        payable(owner()).transfer(address(this).balance - getTotalPendingWithdrawals());
-    }
-    
-    // Get total pending withdrawals
-    function getTotalPendingWithdrawals() public view returns (uint256) {
-        uint256 total = 0;
-        // This is a simplified version since we can't iterate over mappings
-        // In a real implementation, you'd need to track users with pending withdrawals
-        return total;
+    function withdrawFees() external onlyOwner nonReentrant {
+        uint256 balance = address(this).balance;
+        payable(owner()).transfer(balance);
     }
     
     // Emergency stop function
-    bool public emergencyStop = false;
-    
     function toggleEmergencyStop() external onlyOwner {
         emergencyStop = !emergencyStop;
     }
@@ -303,7 +338,7 @@ contract PokemonMarketplace is ReentrancyGuard, Ownable {
                listings[tokenIdToListingId[tokenId]].status == ListingStatus.Active;
     }
     
-    // Get active listings (simplified - in a real implementation, you'd page through results)
+    // Get active listings count
     function getActiveListingCount() external view returns (uint256) {
         uint256 count = 0;
         for (uint256 i = 1; i <= _listingIds.current(); i++) {
